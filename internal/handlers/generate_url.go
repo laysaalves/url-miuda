@@ -1,6 +1,10 @@
 package handlers
 
 import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"github.com/laysaalves/url-miuda/internal/entity"
+	"go.uber.org/zap"
 	"math/rand"
 	"time"
 )
@@ -23,4 +27,22 @@ func GerarUrlAleatoria() string {
 	}
 
 	return string(result)
+}
+
+func EncurtarUrl(db *gorm.DB, UrlOriginal string) {
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	Link := entity.Link{
+		ID:        uuid.New(),
+		LinkLong:  UrlOriginal,
+		LinkMiudo: GerarUrlAleatoria(),
+		CreatedAt: time.Now(),
+	}
+
+	if err := db.Create(&Link).Error; err != nil {
+		logger.Error("Erro ao salvar link", zap.Error(err))
+	} else {
+		logger.Info("Link salvo com sucesso", zap.String("LinkMiudo", Link.LinkMiudo))
+	}
 }

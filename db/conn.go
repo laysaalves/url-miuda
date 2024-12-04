@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func ConnectDB() {
+func ConnectDB() (*gorm.DB, error) {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 
@@ -22,12 +22,19 @@ func ConnectDB() {
 		logger.Fatal("POSTGRES_CONNECTION not found in environment variables")
 	}
 	dsn := postgresConn
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
-	} else if err := db.AutoMigrate(&entity.Link{}); err != nil {
+		return nil, err
+	}
+
+	if err := db.AutoMigrate(&entity.Link{}); err != nil {
 		logger.Fatal("Failed to migrate database", zap.Error(err))
 	} else {
-		logger.Info("Database created successfully")
+		logger.Info("Database migrated successfully")
 	}
+
+	logger.Info("Database connected and migrated successfully")
+	return db, nil
 }
